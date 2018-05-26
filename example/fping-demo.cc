@@ -112,7 +112,7 @@ Config::Set ("/$ns3::NodeListPriv/NodeList/"+intToString(dumbbellHelper.GetRight
                          InetSocketAddress (dumbbellHelper.GetLeftIpv4Address (1), port));
   sourceBulkSend.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
 
-  OnOffHelper sourceOnOffSend ("ns3::TcpSocketFactory", Address ());
+  OnOffHelper sourceOnOffSend ("ns3::UdpSocketFactory", Address ());
   sourceOnOffSend.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.|Max=1.]"));
   sourceOnOffSend.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.|Max=1.]"));
   AddressValue remoteAddress (InetSocketAddress (dumbbellHelper.GetLeftIpv4Address (2), port));
