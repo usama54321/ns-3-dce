@@ -1,0 +1,153 @@
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+ * Copyright (c) 2018 NITK Surathkal
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Sourabh Jain <sourabhjain560@outlook.com>
+ *         Mohit P. Tahiliani <tahiliani@nitk.edu.in>
+ */
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "ns3/core-module.h"
+#include "ns3/network-module.h"
+#include "ns3/internet-module.h"
+#include "ns3/point-to-point-module.h"
+#include "ns3/applications-module.h"
+#include "ns3/flow-monitor-helper.h"
+#include "ns3/ipv4-global-routing-helper.h"
+#include "ns3/dce-module.h"
+
+using namespace ns3;
+
+static Ptr<OutputStreamWrapper> cWndStream;
+
+static void
+tracer (uint32_t oldval, uint32_t newval)
+{
+  std::cout << "Oldvalue: " << oldval << " Newvalue: "<< newval << std::endl;
+  *cWndStream->GetStream () << Simulator::Now ().GetSeconds () << "," << oldval << "," << newval << std::endl;
+}
+
+static void
+cwnd (std::string file_name)
+{
+  AsciiTraceHelper ascii;
+  cWndStream = ascii.CreateFileStream (file_name.c_str ());
+  Config::ConnectWithoutContext ("/NodeList/0/$ns3::TcpL4Protocol/SocketList/0/CongestionWindow", MakeCallback (&tracer));
+}
+
+
+int main (int argc, char *argv[])
+{
+  bool trace = true;
+  bool pcap = false;
+  double simulation_time = 10.0;
+  std::string trace_file = "cwnd_trace_file.trace";
+  std::string stack = "ns3";
+  unsigned int num_flows = 3;
+  double start_time = 0.1;
+  double stop_time = start_time + 10.0;
+
+
+  CommandLine cmd;
+  cmd.AddValue ("trace", "Enable trace", trace);
+  cmd.AddValue ("pcap", "Enable PCAP", pcap);
+  cmd.AddValue ("time", "Simulation Duration", simulation_time);
+  cmd.AddValue ("stack", "Network stack: either ns3 or Linux", stack);
+  cmd.Parse (argc, argv);
+
+  if (stack != "ns3" && stack != "linux")
+    {
+      std::cout << "ERROR: " <<  stack << " is not available" << std::endl; 
+    }
+
+  NodeContainer nodes;
+  nodes.Create (3);
+
+  PointToPointHelper link;
+  link.SetDeviceAttribute ("DataRate", StringValue ("2Mbps"));
+  link.SetChannelAttribute ("Delay", StringValue ("0.01ms"));
+
+  NetDeviceContainer rightToRouterDevices, routerToLeftDevices;
+  rightToRouterDevices = link.Install (nodes.Get (0), nodes.Get (1));
+  routerToLeftDevices = link.Install (nodes.Get (1), nodes.Get (2));
+
+  DceManagerHelper dceManager;
+  LinuxStackHelper linuxStack;
+
+  InternetStackHelper internetStack;
+
+  if (stack == "linux")
+    {
+      dceManager.SetNetworkStack ("ns3::LinuxSocketFdFactory",
+                                  "Library", StringValue ("liblinux.so"));
+      linuxStack.Install (nodes);
+      dceManager.Install (nodes);
+    }
+  else
+    {
+      internetStack.InstallAll ();
+    }
+
+  Ipv4AddressHelper address;
+  address.SetBase ("10.0.0.0", "255.255.255.0");
+  Ipv4InterfaceContainer sink_interfaces;
+  
+
+  Ipv4InterfaceContainer interfaces;
+  address.NewNetwork ();
+  interfaces = address.Assign (rightToRouterDevices);
+  address.NewNetwork ();
+  interfaces = address.Assign (routerToLeftDevices);
+  sink_interfaces.Add (interfaces.Get (1));  
+
+
+
+  uint16_t port = 2000;
+  Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
+  PacketSinkHelper sinkHelper ("ns3::TcpSocketFactory", sinkLocalAddress);
+  
+  AddressValue remoteAddress (InetSocketAddress (sink_interfaces.GetAddress (0, 0), port));
+  BulkSendHelper sender ("ns3::TcpSocketFactory", Address ());
+  sender.SetAttribute ("Remote", remoteAddress);
+  ApplicationContainer sendApp = sender.Install (nodes.Get (0));
+  sendApp.Start (Seconds(0.0));
+  sendApp.Stop (Seconds(10));
+
+  sinkHelper.SetAttribute ("Protocol", TypeIdValue (TcpSocketFactory::GetTypeId ()));
+  ApplicationContainer sinkApp = sinkHelper.Install (nodes.Get (2));
+  sinkApp.Start (Seconds (0.0));
+  sinkApp.Stop (Seconds (12));
+  
+  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+
+  if (trace)
+    {
+      Simulator::Schedule (Seconds (0.00001), &cwnd, trace_file);
+    }
+
+  if (pcap)
+    {
+       std::cout << "Pcap Enabled" << std::endl;
+       link.EnablePcapAll ("cwnd-trace", true);
+    }
+
+  Simulator::Stop (Seconds (15));
+  Simulator::Run ();
+  Simulator::Destroy ();
+  return 0;
+}
