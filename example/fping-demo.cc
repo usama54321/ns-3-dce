@@ -35,6 +35,10 @@
 using namespace ns3;
 
 std::string intToString (int a);
+/*
+ * Helper function to extact Ipv4 address
+ * from Ipv4Address object.
+ */
 std::string Ipv4AddressToString (Ipv4Address ip);
 
 int main (int argc, char *argv[])
@@ -56,7 +60,9 @@ int main (int argc, char *argv[])
       std::cout << "WARNING: " << "Simluation time sholud be greater than 5 seconds" << std::endl;
     }
 
-
+  /*
+   * Bottleneck and Non-Bottleneck links configuration
+   */
   PointToPointHelper p1, p2;
   p1.SetDeviceAttribute ("DataRate", StringValue ("100Mbps"));
   p1.SetChannelAttribute ("Delay", StringValue ("5ms"));
@@ -82,17 +88,26 @@ int main (int argc, char *argv[])
     }
 
   dumbbellHelper.AssignIpv4Addresses (Ipv4AddressHelper ("10.1.1.0", "255.255.255.0"),
-              Ipv4AddressHelper ("10.2.1.0", "255.255.255.0"),
-              Ipv4AddressHelper ("10.3.1.0", "255.255.255.0"));
+                                      Ipv4AddressHelper ("10.2.1.0", "255.255.255.0"),
+                                      Ipv4AddressHelper ("10.3.1.0", "255.255.255.0"));
 
-
+  /*
+   * Increase the buffer size of
+   * Both left and right router
+   * to increase latency.
+   */
   Config::Set ("/$ns3::NodeListPriv/NodeList/"+intToString(dumbbellHelper.GetLeft ()->GetId ())+"/$ns3::Node/$ns3::TrafficControlLayer/RootQueueDiscList/0/$ns3::FifoQueueDisc/MaxSize", QueueSizeValue (QueueSize ("3000p")));
 
 Config::Set ("/$ns3::NodeListPriv/NodeList/"+intToString(dumbbellHelper.GetRight ()->GetId ())+"/$ns3::Node/$ns3::TrafficControlLayer/RootQueueDiscList/0/$ns3::FifoQueueDisc/MaxSize", QueueSizeValue (QueueSize ("3000p")));
-  uint16_t port = 9000;
 
+  uint16_t port = 9000;
+  /*
+   * Application container for
+   * source and sink apps.
+   * Install source apps over
+   * right nodes of dumbbell.
+   */
   ApplicationContainer sourceApps, sinkApps;
-  
   BulkSendHelper sourceBulkSend ("ns3::TcpSocketFactory",
                          InetSocketAddress (dumbbellHelper.GetLeftIpv4Address (1), port));
   sourceBulkSend.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
@@ -105,10 +120,13 @@ Config::Set ("/$ns3::NodeListPriv/NodeList/"+intToString(dumbbellHelper.GetRight
 
   sourceApps.Add (sourceBulkSend.Install (dumbbellHelper.GetRight (1))); 
   sourceApps.Add (sourceOnOffSend.Install (dumbbellHelper.GetRight (1)));
-
   sourceApps.Start (Seconds (startTime));
   sourceApps.Stop (Seconds (simulationTime - 2));
 
+  /*
+   * Install sink application
+   * on left side of dumbbell. 
+   */
   PacketSinkHelper sink ("ns3::TcpSocketFactory",
                          InetSocketAddress (Ipv4Address::GetAny (), port));
   sinkApps.Add (sink.Install (dumbbellHelper.GetLeft (1)));
@@ -116,17 +134,31 @@ Config::Set ("/$ns3::NodeListPriv/NodeList/"+intToString(dumbbellHelper.GetRight
   sinkApps.Start (Seconds (0.0));
   sinkApps.Stop (Seconds (simulationTime));
 
+  /*
+   * Install fping over first node
+   * on the left of dumbbell.
+   */
   DceApplicationHelper dce;
   ApplicationContainer dceApps;
   dce.SetStackSize (1 << 20);
+  // Install binary
   dce.SetBinary ("fping");
   dce.ResetArguments ();
   dce.ResetEnvironment ();
+  /*
+   * -D: display timestamp
+   * -C: per target statistics display
+   * -p: ping frequency
+   * -t: target timeout
+   */
   dce.AddArguments ("-n", "-D", "-C");
   dce.AddArguments (intToString (simulationTime * 5));
   dce.AddArguments ("-p", "200", "-t");
   dce.AddArguments (intToString(simulationTime*2*1000));
 
+  /*
+   * extract ip and add it fping command
+   */
   for (int i = 0; i < dumbbellHelper.RightCount (); i++)
     {
       dce.AddArguments (Ipv4AddressToString(dumbbellHelper.GetRightIpv4Address(i)));
