@@ -1,8 +1,9 @@
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import pandas as pd
-
 
 filename = sys.argv[1]
 
@@ -67,7 +68,7 @@ ax.plot (time, ipData0);
 ax.plot (time, ipData1);
 ax.plot (time, ipData2);
 
-legends = ["Bulksend", "OnOFF", "SinkApp"]
+legends = ["l1", "r1", "r2"]
 
 '''
 Set legends and title 
