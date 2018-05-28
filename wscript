@@ -456,6 +456,10 @@ def build_dce_kernel_examples(module, bld):
     module.add_example(needed = ['core', 'network', 'dce', 'point-to-point', 'mobility'],
                        target='bin/dce-iperf-mptcp',
                        source=['example/dce-iperf-mptcp.cc'])
+ 
+    module.add_example(needed = ['core', 'internet', 'dce', 'point-to-point', 'netanim', 'csma', 'mobility', 'applications'],
+                       target='bin/dce-trace',
+                       source=['example/dce-trace.cc', 'example/ccnx/misc-tools.cc'])
 
     module.add_example(needed = ['core', 'internet', 'network', 'dce', 'point-to-point', 'mobility'],
                        target='bin/dce-iperf-heterogeneous-multihop',
