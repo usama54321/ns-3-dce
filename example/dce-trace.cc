@@ -1,3 +1,23 @@
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+ * Copyright (c) 2018 NITK Surathkal
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Sourabh Jain <sourabhjain560@outlook.com>
+ *         Mohit P. Tahiliani <tahiliani@nitk.edu.in>
+ */
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -33,6 +53,7 @@ cwnd (std::string file_name)
 
 int main (int argc, char *argv[])
 {
+
   std::cout << "main" << std::endl;
   bool trace = true;
   bool pcap = false;
@@ -43,6 +64,10 @@ int main (int argc, char *argv[])
   double start_time = 0.1;
   double stop_time = start_time + 10.0;
   std::string sock_factory = "ns3::TcpSocketFactory";
+  std::string stack = "ns3";
+  unsigned int num_flows = 3;
+  double start_time = 0.1;
+  double stop_time = start_time + 10.0;
 
 
   CommandLine cmd;
@@ -75,7 +100,7 @@ int main (int argc, char *argv[])
 
   if (stack == "linux")
     {
-      
+
       sock_factory = "ns3::LinuxTcpSocketFactory";
       dceManager.SetNetworkStack ("ns3::LinuxSocketFdFactory",
                                   "Library", StringValue ("liblinux.so"));
@@ -86,12 +111,11 @@ int main (int argc, char *argv[])
     {
       internetStack.InstallAll ();
     }
-  
+
   Ipv4AddressHelper address;
   address.SetBase ("10.0.0.0", "255.255.255.0");
-
-  Ipv4InterfaceContainer sink_interfaces;  
-
+  Ipv4InterfaceContainer sink_interfaces;
+ 
   Ipv4InterfaceContainer interfaces;
   address.NewNetwork ();
   interfaces = address.Assign (rightToRouterDevices);
@@ -134,17 +158,18 @@ int main (int argc, char *argv[])
   BulkSendHelper sender (sock_factory, Address ());
   std::cout << "bulk send" << std::endl;
     
-
   sender.SetAttribute ("Remote", remoteAddress);
   ApplicationContainer sendApp = sender.Install (nodes.Get (0));
   sendApp.Start (Seconds(0.0));
   sendApp.Stop (Seconds(10));
   std::cout << "appplication end" << std::endl;
 
+
   sinkHelper.SetAttribute ("Protocol", TypeIdValue (TcpSocketFactory::GetTypeId ()));
   ApplicationContainer sinkApp = sinkHelper.Install (nodes.Get (2));
   sinkApp.Start (Seconds (0.0));
   sinkApp.Stop (Seconds (12));
+
   std::cout << "sink helper end" << std::endl;
 
   if (trace)
