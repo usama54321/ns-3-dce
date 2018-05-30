@@ -49,10 +49,12 @@ int main (int argc, char *argv[])
   unsigned int leftCount = 3;
   unsigned int maxBytes = 0; 
   double startTime = 2.0;
-
+  std::string binary = "fping";
+ 
   CommandLine cmd;
   cmd.AddValue ("pcap", "Enable PCAP", pcap);
   cmd.AddValue ("time", "Simulation Duration", simulationTime);
+  cmd.AddValue ("binary", "Select fping or ping", binary);
   cmd.Parse (argc, argv);
 
   if (simulationTime < 5)
@@ -141,33 +143,59 @@ Config::Set ("/$ns3::NodeListPriv/NodeList/"+intToString(dumbbellHelper.GetRight
   DceApplicationHelper dce;
   ApplicationContainer dceApps;
   dce.SetStackSize (1 << 20);
-  // Install binary
-  dce.SetBinary ("fping");
-  dce.ResetArguments ();
-  dce.ResetEnvironment ();
-  /*
-   * -D: display timestamp
-   * -C: per target statistics display
-   * -p: ping frequency
-   * -t: target timeout
-   */
-  dce.AddArguments ("-n", "-D", "-C");
-  dce.AddArguments (intToString (simulationTime * 5));
-  dce.AddArguments ("-p", "200", "-t");
-  dce.AddArguments (intToString(simulationTime*2*1000));
 
-  /*
-   * extract ip and add it fping command
-   */
-  for (int i = 0; i < dumbbellHelper.RightCount (); i++)
+  if (binary == "fping")
+  {
+    // Install binary
+    dce.SetBinary ("fping");
+    dce.ResetArguments ();
+    dce.ResetEnvironment ();
+    /*
+     * -D: display timestamp
+     * -C: per target statistics display
+     * -p: ping frequency
+     * -t: target timeout
+     */
+    dce.AddArguments ("-n", "-D", "-C");
+    dce.AddArguments (intToString (simulationTime * 5));
+    dce.AddArguments ("-p", "200", "-t");
+    dce.AddArguments (intToString(simulationTime*2*1000));
+
+    /*
+     * extract ip and add it fping command
+     */
+    for (int i = 0; i < dumbbellHelper.RightCount (); i++)
+      {
+        dce.AddArguments (Ipv4AddressToString(dumbbellHelper.GetRightIpv4Address(i)));
+      }
+
+    dce.AddArgument (Ipv4AddressToString(dumbbellHelper.GetLeftIpv4Address (1)));
+    dceApps = dce.Install (dumbbellHelper.GetLeft (0));
+    dceApps.Start (Seconds (startTime));
+    dceApps.Stop (Seconds (simulationTime));
+  }
+  else
+  {
+    for (int i = 0; i < 3; i++)
     {
-      dce.AddArguments (Ipv4AddressToString(dumbbellHelper.GetRightIpv4Address(i)));
+      dce.SetBinary ("ping");
+      dce.ResetArguments ();
+      dce.ResetEnvironment ();
+      dce.AddArguments ("-i", "0.2");
+      dce.AddArguments ("-c", intToString (simulationTime * 5));
+      if (i < 2)
+      {
+        dce.AddArguments (Ipv4AddressToString(dumbbellHelper.GetRightIpv4Address(i)));
+      }
+      else
+      {
+        dce.AddArguments (Ipv4AddressToString(dumbbellHelper.GetLeftIpv4Address (1)));
+      }
+      dceApps = dce.Install (dumbbellHelper.GetLeft (0));
+      dceApps.Start (Seconds (startTime));
+      dceApps.Stop (Seconds (simulationTime));
     }
-
-  dce.AddArgument (Ipv4AddressToString(dumbbellHelper.GetLeftIpv4Address (1)));
-  dceApps = dce.Install (dumbbellHelper.GetLeft (0));
-  dceApps.Start (Seconds (startTime));
-  dceApps.Stop (Seconds (simulationTime));
+  }
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 

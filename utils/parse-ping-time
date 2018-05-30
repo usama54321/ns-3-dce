@@ -1,0 +1,1 @@
+cat files-2/var/log/285/stdout | awk '{print substr($7,6,5)}' > 1
