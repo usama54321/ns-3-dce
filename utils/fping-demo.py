@@ -57,25 +57,24 @@ plt.xlabel (xlabel)
 plt.ylabel (ylabel)
 #plt.title (title)
 
-ax = plt.subplot(111)
+#ax = plt.subplot(111)
 
 '''
 Plot graph against 0th 
 column to every column.
 '''
 
-ax.plot (time, ipData0);
-ax.plot (time, ipData1);
-ax.plot (time, ipData2);
+plt.plot (time, ipData0, label="l1");
+plt.plot (time, ipData1, label="r1");
+plt.plot (time, ipData2, label="r2");
 
-legends = ["l1", "r1", "r2"]
 
 '''
 Set legends and title 
 '''
-box = ax.get_position()
-ax.set_position([box.x0, box.y0, box.width * 0.80, box.height])
-ax.legend(legends, loc='center left', title=lTitle, bbox_to_anchor=(1, 0.5))
+#box = ax.get_position()
+#ax.set_position([box.x0, box.y0, box.width * 0.80, box.height])
+plt.legend(loc='center right')
 
 '''
 Save the graph
