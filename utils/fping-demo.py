@@ -8,8 +8,8 @@ import pandas as pd
 filename = sys.argv[1]
 
 outputfile = sys.argv[2]
-xlabel = "time(s)"
-ylabel = "latency(ms)"
+xlabel = "Time (s)"
+ylabel = "Latency (ms)"
 title = ""
 lTitle = "Node"
 
@@ -64,9 +64,9 @@ Plot graph against 0th
 column to every column.
 '''
 
-plt.plot (time, ipData0, label="l1");
-plt.plot (time, ipData1, label="r1");
-plt.plot (time, ipData2, label="r2");
+plt.plot (time, ipData0, label="node-1 to node-2");
+plt.plot (time, ipData1, label="node-1 to node-4");
+plt.plot (time, ipData2, label="node-1 to node-5");
 
 
 '''
