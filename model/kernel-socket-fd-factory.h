@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "linux/types.h"
+#include <semaphore.h>
 
 extern "C" {
 struct DceHandle;

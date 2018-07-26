@@ -35,7 +35,6 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <semaphore.h>
 
 NS_LOG_COMPONENT_DEFINE ("DceKernelSocketFdFactory");
 
@@ -330,12 +329,9 @@ KernelSocketFdFactory::Random (struct DceKernel *kernel)
 void
 KernelSocketFdFactory::Panic (struct DceKernel *kernel)
 {
-  NS_LOG_FUNCTION (kernel << function);
-  KernelSocketFdFactory *self = (KernelSocketFdFactory) *kernel;
-  ptr<DceManager> manager = self->GetObject<DceManager> ();
-  ptr<Node> node = GetObject <Node> ();
-  NS_ASSERT (node != 0);
-  manager->Panic (node->GetId ());
+  KernelSocketFdFactory *self = (KernelSocketFdFactory *) kernel;
+  Ptr<DceManager> manager = self->GetObject<DceManager> ();
+  manager->Panic ();
 }
 void
 KernelSocketFdFactory::EventTrampoline (void (*fn)(void *context),
@@ -653,7 +649,7 @@ KernelSocketFdFactory::InitializeStack (void)
   dceHandle.sem_wait = &KernelSocketFdFactory::SemWait;
   dceHandle.pthread_mutex_init = &KernelSocketFdFactory::PthreadMutexInit;
   dceHandle.pthread_mutex_destroy = &KernelSocketFdFactory::PthreadMutexDestroy;
-  dceHandle.pthread_mutex_lock = &KernelSocketFdFactory::PthreadMutexLock
+  dceHandle.pthread_mutex_lock = &KernelSocketFdFactory::PthreadMutexLock;
   dceHandle.pthread_mutex_unlock = &KernelSocketFdFactory::PthreadMutexUnlock;
   dceHandle.pthread_mutexattr_settype = &KernelSocketFdFactory::PthreadMutexattrSettype;
   dceHandle.pthread_mutexattr_init = &KernelSocketFdFactory::PthreadMutexattrInit;
