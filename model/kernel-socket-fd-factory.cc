@@ -131,65 +131,123 @@ KernelSocketFdFactory::DoDispose (void)
 }
 
 int
-SemInit (struct DceKernel *kernel, sem_t *sem, int pshared, unsigned int value)
+KernelSocketFdFactory::SemInit (struct DceKernel *kernel, sem_t *sem, int pshared, unsigned int value)
 {
   return dce_sem_init (sem, pshared, value);
 }
 
 void
-SemDestroy (DceKernel *kernel, sem_t *sem)
+KernelSocketFdFactory::SemDestroy (DceKernel *kernel, sem_t *sem)
 {
   dce_sem_destroy (sem);
 }
 
 void
-SemPost (DceKernel *kernel, sem_t *sem)
+KernelSocketFdFactory::SemPost (DceKernel *kernel, sem_t *sem)
 {
   dce_sem_post (sem);
 }
 
 void
-SemWait (DceKernel *kernel, sem_t *sem)
+KernelSocketFdFactory::SemWait (DceKernel *kernel, sem_t *sem)
 {
   dce_sem_wait (sem);
 }
 
 int
-PthreadMutexInit (DceKernel *kernel, pthread_mutex_t *mutex,
+KernelSocketFdFactory::PthreadMutexInit (DceKernel *kernel, pthread_mutex_t *mutex,
                   const pthread_mutexattr_t *attribute)
 {
   return dce_pthread_mutex_init (mutex, attribute);
 }
 
 int
-PthreadMutexDestroy (DceKernel *kernel, pthread_mutex_t *mutex)
+KernelSocketFdFactory::PthreadMutexDestroy (DceKernel *kernel, pthread_mutex_t *mutex)
 {
   return dce_pthread_mutex_destroy (mutex);
 }
 
 int
-PthreadMutexLock (DceKernel *kernel, pthread_mutex_t *mutex)
+KernelSocketFdFactory::PthreadMutexLock (DceKernel *kernel, pthread_mutex_t *mutex)
 {
   return dce_pthread_mutex_lock (mutex);
 }
 
 int
-PthreadMutexUnlock (DceKernel *kernel, pthread_mutex_t *mutex)
+KernelSocketFdFactory::PthreadMutexUnlock (DceKernel *kernel, pthread_mutex_t *mutex)
 {
   return dce_pthread_mutex_unlock (mutex);
 }
 
 int
-PthreadMutexattrSettype (DceKernel *kernel,
+KernelSocketFdFactory::PthreadMutexattrSettype (DceKernel *kernel,
                          pthread_mutexattr_t *attribute, int kind)
 {
   return dce_pthread_mutexattr_settype (attribute, kind);
 }
 
 int
-PthreadMutexattrInit (DceKernel *kernel, pthread_mutexattr_t *attribute)
+KernelSocketFdFactory::PthreadMutexattrInit (DceKernel *kernel, pthread_mutexattr_t *attribute)
 {
   return pthread_mutexattr_init (attribute);
+}
+
+int
+KernelSocketFdFactory::PthreadCreate (struct DceKernel *kernel, pthread_t *threadHandle,
+               const pthread_attr_t *attr,
+               void *(*start_routine)(void*), void *arg)
+{
+  return dce_pthread_create (threadHandle, attr, start_routine, arg);
+}
+
+int
+KernelSocketFdFactory::PthreadDetach (struct DceKernel *kernel, pthread_t threadHandle)
+{
+  return dce_pthread_detach (threadHandle);
+}
+
+void
+KernelSocketFdFactory::PthreadExit (struct DceKernel *kernel, void *arg)
+{
+  dce_pthread_exit (arg);
+}
+
+int
+KernelSocketFdFactory::PthreadJoin (struct DceKernel *kernel, pthread_t threadHandle, void **valuePtr)
+{
+  return dce_pthread_join (threadHandle, valuePtr);
+}
+
+pthread_t
+KernelSocketFdFactory::PthreadSelf (struct DceKernel *kernel)
+{
+  return dce_pthread_self ();
+}
+
+int
+KernelSocketFdFactory::PthreadKeyCreate (struct DceKernel *kernel, pthread_key_t *key,
+                      void (*destructor)(void*))
+{
+  return dce_pthread_key_create (key, destructor);
+}
+
+int
+KernelSocketFdFactory::PthreadKeyDelete (struct DceKernel *kernel, pthread_key_t key)
+{
+  return dce_pthread_key_delete (key);
+}
+
+int
+KernelSocketFdFactory::PthreadSetspecific (struct DceKernel *kernel, pthread_key_t key,
+                    const void *value)
+{
+  return dce_pthread_setspecific (key, value);
+}
+
+void
+KernelSocketFdFactory::PthreadGetspecific (struct DceKernel *kernel, pthread_key_t key)
+{
+  return dce_pthread_getspecific (key);
 }
 
 int

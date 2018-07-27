@@ -100,6 +100,20 @@ private:
   static int PthreadMutexattrSettype (DceKernel *kernel,
                                       pthread_mutexattr_t *attribute, int kind);
   static int PthreadMutexattrInit (DceKernel *kernel, pthread_mutexattr_t *attr);
+  static int PthreadCreate (struct DceKernel *kernel, pthread_t *threadHandle,
+                            const pthread_attr_t *attr,
+                            void *(*start_routine)(void*), void *arg);
+  static int PthreadDetach (struct DceKernel *kernel, pthread_t threadHandle);
+  static void PthreadExit (struct DceKernel *kernel, void *arg);
+  static int PthreadJoin (struct DceKernel *kernel, pthread_t threadHandle,
+                          void **valuePtr);
+  static pthread_t PthreadSelf (struct DceKernel *kernel);
+  static int PthreadKeyCreate (struct DceKernel *kernel, pthread_key_t *key,
+                               void (*destructor)(void*));
+  static int PthreadKeyDelete (struct DceKernel *kernel, pthread_key_t key);
+  static int PthreadSetspecific (struct DceKernel *kernel, pthread_key_t key,
+                                 const void *value);
+  static void PthreadGetspecific (struct DceKernel *kernel, pthread_key_t key);
   static int Vprintf (struct DceKernel *kernel, const char *str, va_list args);
   static void * Malloc (struct DceKernel *kernel, unsigned long size);
   static void Free (struct DceKernel *kernel, void *buffer);
