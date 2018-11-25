@@ -40,6 +40,7 @@ NS_LOG_COMPONENT_DEFINE ("DceKernelSocketFdFactory");
 
 namespace ns3 {
 
+bool kern_init = false;
 // Sadly NetDevice Callback add by method AddLinkChangeCallback take no parameters ..
 // .. so we need to create the following class to link NetDevice and KernelSocketFdFactory together
 // in order to do Warn the factory about which NetDevice is changing .
@@ -409,11 +410,16 @@ KernelSocketFdFactory::EventScheduleNs (struct DceKernel *kernel, __u64 ns, void
   Ptr<EventIdHolder> ev = Create<EventIdHolder> ();
   TaskManager *manager = TaskManager::Current ();
 
+  if(!kern_init) {
+      fn(context);
+      return NULL;
+    }
   ev->id = manager->ScheduleMain (NanoSeconds (ns),
                                   MakeEvent (&KernelSocketFdFactory::EventTrampoline, self, fn, context, pre_fn, ev));
 
   return &ev->id;
 }
+
 void
 KernelSocketFdFactory::EventCancel (struct DceKernel *kernel, void *ev)
 {
@@ -747,7 +753,7 @@ KernelSocketFdFactory::InitializeStack (void)
   m_pid = manager->StartInternalTask ();
 
   init (m_kernelHandle, &dceHandle, (struct DceKernel *)this);
-
+  kern_init = true;
   // update the kernel device list with simulation device list
   Ptr<Node> node = GetObject<Node> ();
   node->RegisterDeviceAdditionListener (MakeCallback (&KernelSocketFdFactory::NotifyAddDevice,
